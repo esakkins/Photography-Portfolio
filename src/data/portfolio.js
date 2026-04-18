@@ -1,0 +1,88 @@
+export const portfolioItems = [
+  {
+    id: 1,
+    title: 'Golden Hour Portrait',
+    category: 'Portrait',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
+    description: 'A warm portrait capturing the golden hour light',
+  },
+  {
+    id: 2,
+    title: 'Mountain Serenity',
+    category: 'Landscape',
+    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32dfb?w=800&q=80',
+    description: 'Misty mountains at dawn',
+  },
+  {
+    id: 3,
+    title: 'Wedding Celebration',
+    category: 'Event',
+    image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80',
+    description: 'Joyful wedding moment',
+  },
+  {
+    id: 4,
+    title: 'Urban Stories',
+    category: 'Street',
+    image: 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=80',
+    description: 'City life in motion',
+  },
+  {
+    id: 5,
+    title: 'Couple in Love',
+    category: 'Couple',
+    image: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=800&q=80',
+    description: 'Romantic sunset session',
+  },
+  {
+    id: 6,
+    title: 'Product Showcase',
+    category: 'Product',
+    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80',
+    description: 'Minimalist product photography',
+  },
+  {
+    id: 7,
+    title: 'Night Portrait',
+    category: 'Portrait',
+    image: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&q=80',
+    description: 'Dramatic night portrait',
+  },
+  {
+    id: 8,
+    title: 'Ocean Waves',
+    category: 'Landscape',
+    image: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&q=80',
+    description: 'Powerful ocean waves',
+  },
+  {
+    id: 9,
+    title: 'Corporate Event',
+    category: 'Event',
+    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80',
+    description: 'Professional conference',
+  },
+  {
+    id: 10,
+    title: 'Street Life',
+    category: 'Street',
+    image: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=800&q=80',
+    description: 'Vibrant city streets',
+  },
+  {
+    id: 11,
+    title: 'Anniversary Session',
+    category: 'Couple',
+    image: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=800&q=80',
+    description: 'Celebrating love',
+  },
+  {
+    id: 12,
+    title: 'Handmade Craft',
+    category: 'Product',
+    image: 'https://images.unsplash.com/photo-1616401784845-180882ba9ba3?w=800&q=80',
+    description: 'Artisan product shot',
+  },
+];
+
+export const categories = ['All', 'Portrait', 'Landscape', 'Event', 'Street', 'Couple', 'Product'];
