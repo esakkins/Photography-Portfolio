@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { ChevronDown, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 
-const carouselImages = [
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32dfb?w=800&q=80',
-  'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80',
-  'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=800&q=80',
-  'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&q=80',
+const galleryImages = [
+  { url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80', title: 'Portrait' },
+  { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32dfb?w=600&q=80', title: 'Landscape' },
+  { url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80', title: 'Wedding' },
+  { url: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=600&q=80', title: 'Couple' },
+  { url: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=600&q=80', title: 'Nature' },
+  { url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80', title: 'Product' },
 ];
 
 const phrases = [
@@ -19,20 +20,34 @@ const phrases = [
 ];
 
 export default function Hero() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [direction, setDirection] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [displayText, setDisplayText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
   const [currentPhrase, setCurrentPhrase] = useState(0);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setDirection(1);
-      setCurrentSlide((prev) => (prev + 1) % carouselImages.length);
-    }, 5000);
+      goToNext();
+    }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeIndex, isTransitioning]);
 
+  const goToNext = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setActiveIndex((prev) => (prev + 1) % galleryImages.length);
+    setTimeout(() => setIsTransitioning(false), 800);
+  };
+
+  const goToPrev = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setActiveIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+    setTimeout(() => setIsTransitioning(false), 800);
+  };
+    
   useEffect(() => {
     const phrase = phrases[currentPhrase].text;
     
@@ -71,22 +86,12 @@ export default function Hero() {
     }
   };
 
-  const slideVariants = {
-    enter: (direction) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
-      scale: 0.9,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
-    },
-    exit: (direction) => ({
-      x: direction < 0 ? 300 : -300,
-      opacity: 0,
-      scale: 0.9,
-    }),
+  const getVisibleIndices = (center) => {
+    const indices = [];
+    for (let i = -3; i <= 3; i++) {
+      indices.push((center + i + galleryImages.length) % galleryImages.length);
+    }
+    return indices;
   };
 
   return (
@@ -160,67 +165,99 @@ export default function Hero() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5, duration: 0.8 }}
-          className="order-1 md:order-2 flex justify-center"
+          className="order-1 md:order-2"
         >
-          <div className="carousel-container relative w-full max-w-lg aspect-[4/3] overflow-hidden rounded-2xl">
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.img
-                key={currentSlide}
-                src={carouselImages[currentSlide]}
-                alt="Portfolio"
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{
-                  x: { type: "spring", stiffness: 300, damping: 30 },
-                  opacity: { duration: 0.4 },
-                }}
-                className="w-full h-full object-cover"
-              />
-            </AnimatePresence>
-            
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-            
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
-              {carouselImages.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    setDirection(idx > currentSlide ? 1 : -1);
-                    setCurrentSlide(idx);
-                  }}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    idx === currentSlide ? 'bg-white w-6' : 'bg-white/50'
-                  }`}
-                />
-              ))}
+          <div className="film-strip-container" ref={containerRef}>
+            <div className="film-strip-track">
+              {getVisibleIndices(activeIndex).map((idx, position) => {
+                const distance = Math.abs(position - 3);
+                const isCenter = distance === 0;
+                const isVisible = distance < 3;
+                
+                return (
+                  <motion.div
+                    key={`${activeIndex}-${idx}`}
+                    className="film-frame-wrapper"
+                    initial={false}
+                    animate={{
+                      x: (position - 3) * 180,
+                      scale: isCenter ? 1 : isVisible ? 0.75 : 0.5,
+                      opacity: isVisible ? 1 : 0.3,
+                      zIndex: 10 - distance,
+                    }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 25,
+                    }}
+                    onClick={() => {
+                      if (!isCenter && !isTransitioning) {
+                        setIsTransitioning(true);
+                        setActiveIndex(idx);
+                        setTimeout(() => setIsTransitioning(false), 800);
+                      }
+                    }}
+                    style={{ cursor: isCenter ? 'default' : 'pointer' }}
+                  >
+                    <div className={`film-frame ${isCenter ? 'active' : ''}`}>
+                      <img 
+                        src={galleryImages[idx].url} 
+                        alt={galleryImages[idx].title}
+                        className="film-image"
+                      />
+                      <div className="film-sprockets left">
+                        {[...Array(8)].map((_, i) => (
+                          <div key={i} className="sprocket-hole" />
+                        ))}
+                      </div>
+                      <div className="film-sprockets right">
+                        {[...Array(8)].map((_, i) => (
+                          <div key={i} className="sprocket-hole" />
+                        ))}
+                      </div>
+                      {isCenter && (
+                        <motion.div 
+                          className="film-label"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.3 }}
+                        >
+                          {galleryImages[idx].title}
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
             
-            <motion.div
-              className="absolute top-1/2 left-4 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center cursor-pointer hover:bg-white/30 transition-colors"
-              onClick={() => {
-                setDirection(-1);
-                setCurrentSlide((prev) => (prev - 1 + carouselImages.length) % carouselImages.length);
-              }}
-            >
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </motion.div>
-            
-            <motion.div
-              className="absolute top-1/2 right-4 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center cursor-pointer hover:bg-white/30 transition-colors"
-              onClick={() => {
-                setDirection(1);
-                setCurrentSlide((prev) => (prev + 1) % carouselImages.length);
-              }}
-            >
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </motion.div>
+            <div className="film-navigation">
+              <button onClick={goToPrev} className="nav-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="film-indicators">
+                {galleryImages.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      if (!isTransitioning) {
+                        setIsTransitioning(true);
+                        setActiveIndex(idx);
+                        setTimeout(() => setIsTransitioning(false), 800);
+                      }
+                    }}
+                    className={`film-dot ${idx === activeIndex ? 'active' : ''}`}
+                  />
+                ))}
+              </div>
+              <button onClick={goToNext} className="nav-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>
@@ -242,6 +279,158 @@ export default function Hero() {
       </motion.button>
 
       <style>{`
+        .film-strip-container {
+          position: relative;
+          width: 100%;
+          max-width: 600px;
+          height: 320px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .film-strip-track {
+          position: relative;
+          width: 100%;
+          height: 240px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .film-frame-wrapper {
+          position: absolute;
+          width: 160px;
+          height: 200px;
+        }
+
+        .film-frame {
+          width: 100%;
+          height: 100%;
+          position: relative;
+          border-radius: 4px;
+          overflow: hidden;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+          transition: box-shadow 0.3s ease;
+        }
+
+        .film-frame.active {
+          box-shadow: 0 12px 48px rgba(212, 165, 116, 0.3), 0 0 0 2px rgba(212, 165, 116, 0.5);
+        }
+
+        .film-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .film-sprockets {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 12px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 8px 0;
+        }
+
+        .film-sprockets.left {
+          left: 0;
+        }
+
+        .film-sprockets.right {
+          right: 0;
+        }
+
+        .sprocket-hole {
+          width: 6px;
+          height: 10px;
+          background: #0D0D0D;
+          border-radius: 2px;
+        }
+
+        .film-label {
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0, 0, 0, 0.8);
+          color: #D4A574;
+          padding: 6px 16px;
+          border-radius: 4px;
+          font-size: 12px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .film-navigation {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          margin-top: 20px;
+        }
+
+        .nav-btn {
+          width: 40px;
+          height: 40px;
+          border: 1px solid rgba(212, 165, 116, 0.3);
+          background: transparent;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+          border-color: #D4A574;
+          background: rgba(212, 165, 116, 0.1);
+        }
+
+        .nav-btn svg {
+          width: 18px;
+          height: 18px;
+          color: #D4A574;
+        }
+
+        .film-indicators {
+          display: flex;
+          gap: 8px;
+        }
+
+        .film-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: rgba(212, 165, 116, 0.3);
+          border: none;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .film-dot.active {
+          background: #D4A574;
+          box-shadow: 0 0 10px rgba(212, 165, 116, 0.5);
+        }
+
+        @media (max-width: 768px) {
+          .film-strip-container {
+            height: 280px;
+          }
+
+          .film-strip-track {
+            height: 200px;
+          }
+
+          .film-frame-wrapper {
+            width: 120px;
+            height: 160px;
+          }
+        }
+
         .camera-3d-container {
           perspective: 1000px;
           transform-style: preserve-3d;
