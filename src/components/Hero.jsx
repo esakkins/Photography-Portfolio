@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { ChevronDown, Zap } from 'lucide-react';
+
+const carouselImages = [
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32dfb?w=800&q=80',
+  'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80',
+  'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=800&q=80',
+  'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=800&q=80',
+];
 
 const phrases = [
   { text: "Capturing Moments", gradient: false },
@@ -10,122 +18,20 @@ const phrases = [
   { text: "Painting with Light", gradient: true },
 ];
 
-function Camera3D({ isFlashing }) {
-  const x = useMotionValue(0.5);
-  const y = useMotionValue(0.5);
-  
-  const rotateX = useTransform(y, [0, 1], [15, -15]);
-  const rotateY = useTransform(x, [0, 1], [-15, 15]);
-  
-  const springX = useSpring(rotateX, { stiffness: 100, damping: 30 });
-  const springY = useSpring(rotateY, { stiffness: 100, damping: 30 });
-
-  return (
-    <motion.div
-      className="camera-3d-container"
-      style={{
-        rotateX: springX,
-        rotateY: springY,
-      }}
-    >
-      <div className="camera-scene">
-        <div className="camera-body-group">
-          <div className="camera-body">
-            <div className="camera-lens-outer">
-              <motion.div 
-                className="camera-lens-inner"
-                animate={isFlashing ? { scale: [1, 1.15, 1] } : {}}
-                transition={{ duration: 0.15 }}
-              >
-                <div className="lens-glass">
-                  <div className="lens-reflection" />
-                  <div className="lens-reflection secondary" />
-                </div>
-                <div className="lens-aperture" />
-              </motion.div>
-              <motion.div 
-                className="lens-ring-outer"
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
-              >
-                <div className="lens-ring-segment" />
-                <div className="lens-ring-segment" />
-                <div className="lens-ring-segment" />
-                <div className="lens-ring-segment" />
-              </motion.div>
-            </div>
-            
-            <div className="camera-shutter-group">
-              <motion.div 
-                className="shutter-button"
-                animate={isFlashing ? { scaleY: 0.3, translateY: 2 } : { scaleY: 1, translateY: 0 }}
-                transition={{ duration: 0.08 }}
-              />
-              <div className="shutter-label">F/2.8</div>
-            </div>
-            
-            <div className="camera-grip" />
-            
-            <div className="camera-top-section">
-              <div className="viewfinder-window">
-                <div className="viewfinder-inner" />
-              </div>
-              <div className="hot-shoe" />
-              <div className="mode-dial">
-                <div className="dial-marking" />
-                <div className="dial-marking" />
-                <div className="dial-marking" />
-              </div>
-            </div>
-            
-            <motion.div 
-              className="flash-unit"
-              animate={isFlashing ? { backgroundColor: ['#2d2924', '#D4A574', '#2d2924'] } : {}}
-              transition={{ duration: 0.2 }}
-            >
-              <Zap className="flash-icon" />
-            </motion.div>
-            
-            <div className="brand-text">LENS</div>
-          </div>
-          
-          <div className="camera-base-plate" />
-          
-          <div className="lens-mount-group">
-            <div className="lens-mount-ring" />
-          </div>
-        </div>
-        
-        <div className="floating-particles">
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="particle"
-              animate={{
-                y: [0, -25, 0],
-                opacity: [0.2, 0.7, 0.2],
-                scale: [0.8, 1.2, 0.8],
-              }}
-              transition={{
-                repeat: Infinity,
-                duration: 2.5 + i * 0.3,
-                delay: i * 0.3,
-                ease: "easeInOut",
-              }}
-              style={{ left: `${15 + i * 14}%`, top: `${25 + (i % 3) * 25}%` }}
-            />
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 export default function Hero() {
-  const [isFlashing, setIsFlashing] = useState(false);
-  const [currentPhrase, setCurrentPhrase] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [direction, setDirection] = useState(0);
   const [displayText, setDisplayText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
+  const [currentPhrase, setCurrentPhrase] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDirection(1);
+      setCurrentSlide((prev) => (prev + 1) % carouselImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const phrase = phrases[currentPhrase].text;
@@ -140,7 +46,7 @@ export default function Hero() {
           clearInterval(timer);
           setTimeout(() => setIsTyping(false), 2000);
         }
-      }, 80);
+      }, 120);
       return () => clearInterval(timer);
     } else {
       let index = phrase.length;
@@ -153,7 +59,7 @@ export default function Hero() {
           setCurrentPhrase((prev) => (prev + 1) % phrases.length);
           setIsTyping(true);
         }
-      }, 40);
+      }, 60);
       return () => clearInterval(timer);
     }
   }, [currentPhrase, isTyping]);
@@ -165,9 +71,22 @@ export default function Hero() {
     }
   };
 
-  const handleClick = () => {
-    setIsFlashing(true);
-    setTimeout(() => setIsFlashing(false), 250);
+  const slideVariants = {
+    enter: (direction) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0,
+      scale: 0.9,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+    },
+    exit: (direction) => ({
+      x: direction < 0 ? 300 : -300,
+      opacity: 0,
+      scale: 0.9,
+    }),
   };
 
   return (
@@ -243,13 +162,65 @@ export default function Hero() {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="order-1 md:order-2 flex justify-center"
         >
-          <div className="camera-wrapper flex flex-col items-center">
-            <div onClick={handleClick} className="cursor-pointer">
-              <Camera3D isFlashing={isFlashing} />
+          <div className="carousel-container relative w-full max-w-lg aspect-[4/3] overflow-hidden rounded-2xl">
+            <AnimatePresence mode="wait" custom={direction}>
+              <motion.img
+                key={currentSlide}
+                src={carouselImages[currentSlide]}
+                alt="Portfolio"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: "spring", stiffness: 300, damping: 30 },
+                  opacity: { duration: 0.4 },
+                }}
+                className="w-full h-full object-cover"
+              />
+            </AnimatePresence>
+            
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+            
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+              {carouselImages.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setDirection(idx > currentSlide ? 1 : -1);
+                    setCurrentSlide(idx);
+                  }}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    idx === currentSlide ? 'bg-white w-6' : 'bg-white/50'
+                  }`}
+                />
+              ))}
             </div>
-            <p className="text-text-secondary text-xs text-center mt-4 opacity-40">
-              Click camera to capture
-            </p>
+            
+            <motion.div
+              className="absolute top-1/2 left-4 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center cursor-pointer hover:bg-white/30 transition-colors"
+              onClick={() => {
+                setDirection(-1);
+                setCurrentSlide((prev) => (prev - 1 + carouselImages.length) % carouselImages.length);
+              }}
+            >
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </motion.div>
+            
+            <motion.div
+              className="absolute top-1/2 right-4 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center cursor-pointer hover:bg-white/30 transition-colors"
+              onClick={() => {
+                setDirection(1);
+                setCurrentSlide((prev) => (prev + 1) % carouselImages.length);
+              }}
+            >
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </motion.div>
           </div>
         </motion.div>
       </div>
