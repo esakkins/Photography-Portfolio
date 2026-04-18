@@ -24,132 +24,14 @@ const frameStyles = [
 function PhotoFrameEditor({ photoData, onClose, onRetake }) {
   const [selectedFrame, setSelectedFrame] = useState(frameStyles[0]);
   const [showFrames, setShowFrames] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
 
-  const handleDownload = async () => {
-    setIsDownloading(true);
-    
-    try {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = photoData;
-      });
-      
-      canvas.width = img.width;
-      canvas.height = img.height;
-      
-      ctx.drawImage(img, 0, 0);
-      
-      const padding = 30;
-      const exportCanvas = document.createElement('canvas');
-      const exportCtx = exportCanvas.getContext('2d');
-      
-      exportCanvas.width = img.width + padding * 2;
-      exportCanvas.height = img.height + padding * 2;
-      
-      if (selectedFrame.id === 'polaroid') {
-        exportCtx.fillStyle = '#ffffff';
-        exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-        exportCtx.fillStyle = '#ffffff';
-        exportCtx.fillRect(20, 20, img.width + 40, img.height + 80);
-        exportCtx.drawImage(img, 40, 40);
-        exportCtx.fillStyle = '#333333';
-        exportCtx.font = '14px Arial';
-        exportCtx.textAlign = 'center';
-        exportCtx.fillText(new Date().toLocaleDateString(), exportCanvas.width / 2, img.height + 70);
-      } else if (selectedFrame.id === 'film') {
-        exportCtx.fillStyle = '#1a1815';
-        exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-        
-        const sprocketSize = 10;
-        for (let i = 0; i < 6; i++) {
-          exportCtx.fillStyle = '#0D0D0D';
-          exportCtx.fillRect(15, 20 + i * 25, sprocketSize, 8);
-          exportCtx.fillRect(exportCanvas.width - 15 - sprocketSize, 20 + i * 25, sprocketSize, 8);
-        }
-        
-        exportCtx.fillStyle = '#ffffff';
-        exportCtx.fillRect(30, 20, img.width + 20, img.height + 20);
-        exportCtx.drawImage(img, 40, 30);
-      } else if (selectedFrame.id === 'gold') {
-        exportCtx.fillStyle = '#D4A574';
-        exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-        
-        exportCtx.fillStyle = '#0D0D0D';
-        exportCtx.fillRect(padding, padding, img.width, img.height);
-        exportCtx.drawImage(img, padding, padding);
-        
-        exportCtx.strokeStyle = '#E8C9A0';
-        exportCtx.lineWidth = 2;
-        exportCtx.strokeRect(padding, padding, img.width, img.height);
-      } else if (selectedFrame.id === 'vintage') {
-        exportCtx.fillStyle = '#8B7355';
-        exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-        
-        exportCtx.fillStyle = '#0D0D0D';
-        exportCtx.fillRect(padding, padding, img.width, img.height);
-        exportCtx.drawImage(img, padding, padding);
-        
-        exportCtx.fillStyle = 'rgba(139, 115, 85, 0.3)';
-        exportCtx.fillRect(padding, padding, img.width, img.height);
-      } else if (selectedFrame.id === 'neon') {
-        exportCtx.fillStyle = '#0D0D0D';
-        exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-        
-        exportCtx.shadowColor = '#D4A574';
-        exportCtx.shadowBlur = 15;
-        exportCtx.strokeStyle = '#D4A574';
-        exportCtx.lineWidth = 4;
-        exportCtx.strokeRect(padding, padding, img.width, img.height);
-        exportCtx.shadowBlur = 0;
-        
-        exportCtx.drawImage(img, padding, padding);
-      } else if (selectedFrame.id === 'grunge') {
-        exportCtx.fillStyle = '#4a4540';
-        exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-        
-        exportCtx.fillStyle = '#0D0D0D';
-        exportCtx.fillRect(padding, padding, img.width, img.height);
-        exportCtx.drawImage(img, padding, padding);
-      } else if (selectedFrame.id === 'minimal') {
-        exportCtx.fillStyle = '#0D0D0D';
-        exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-        
-        exportCtx.strokeStyle = '#F5F0EB';
-        exportCtx.lineWidth = 2;
-        exportCtx.strokeRect(padding, padding, img.width, img.height);
-        
-        exportCtx.drawImage(img, padding, padding);
-      } else {
-        exportCtx.fillStyle = '#D4A574';
-        exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-        
-        exportCtx.fillStyle = '#0D0D0D';
-        exportCtx.fillRect(padding, padding, img.width, img.height);
-        exportCtx.drawImage(img, padding, padding);
-      }
-      
-      const link = document.createElement('a');
-      link.download = `photo-frame-${Date.now()}.png`;
-      link.href = exportCanvas.toDataURL('image/png');
-      link.click();
-      
-      setIsDownloading(false);
-    } catch (error) {
-      console.error('Download error:', error);
-      
-      const link = document.createElement('a');
-      link.download = `photo-${Date.now()}.png`;
-      link.href = photoData;
-      link.click();
-      
-      setIsDownloading(false);
-    }
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.download = `photo-${Date.now()}.png`;
+    link.href = photoData;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -276,18 +158,9 @@ function PhotoFrameEditor({ photoData, onClose, onRetake }) {
           
           <button 
             onClick={handleDownload}
-            disabled={isDownloading}
-            className="px-6 py-2.5 bg-[#D4A574] text-black rounded-full hover:bg-[#D4A574]/90 transition-colors flex items-center gap-2 text-sm disabled:opacity-50"
+            className="px-6 py-2.5 bg-[#D4A574] text-black rounded-full hover:bg-[#D4A574]/90 transition-colors flex items-center gap-2 text-sm"
           >
-            {isDownloading ? (
-              <motion.div 
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1 }}
-                className="w-4 h-4 border-2 border-black border-t-transparent rounded-full"
-              />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
+            <Download className="w-4 h-4" />
             Download
           </button>
         </div>
