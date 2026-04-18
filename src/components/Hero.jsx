@@ -30,22 +30,22 @@ export default function Hero() {
   useEffect(() => {
     const interval = setInterval(() => {
       goToNext();
-    }, 4000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [activeIndex, isTransitioning]);
 
   const goToNext = () => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-    setActiveIndex((prev) => (prev + 1) % galleryImages.length);
-    setTimeout(() => setIsTransitioning(false), 800);
+    setActiveIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+    setTimeout(() => setIsTransitioning(false), 1000);
   };
 
   const goToPrev = () => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-    setActiveIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
-    setTimeout(() => setIsTransitioning(false), 800);
+    setActiveIndex((prev) => (prev + 1) % galleryImages.length);
+    setTimeout(() => setIsTransitioning(false), 1000);
   };
     
   useEffect(() => {
@@ -187,19 +187,24 @@ export default function Hero() {
                     }}
                     transition={{
                       type: "spring",
-                      stiffness: 200,
-                      damping: 25,
+                      stiffness: 100,
+                      damping: 20,
+                      duration: 0.8,
                     }}
                     onClick={() => {
                       if (!isCenter && !isTransitioning) {
                         setIsTransitioning(true);
                         setActiveIndex(idx);
-                        setTimeout(() => setIsTransitioning(false), 800);
+                        setTimeout(() => setIsTransitioning(false), 1000);
                       }
                     }}
                     style={{ cursor: isCenter ? 'default' : 'pointer' }}
                   >
-                    <div className={`film-frame ${isCenter ? 'active' : ''}`}>
+                    <motion.div 
+                      className={`film-frame ${isCenter ? 'active' : ''}`}
+                      animate={isCenter ? { scale: [1, 1.02, 1] } : {}}
+                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    >
                       <img 
                         src={galleryImages[idx].url} 
                         alt={galleryImages[idx].title}
@@ -225,38 +230,10 @@ export default function Hero() {
                           {galleryImages[idx].title}
                         </motion.div>
                       )}
-                    </div>
+                    </motion.div>
                   </motion.div>
                 );
               })}
-            </div>
-            
-            <div className="film-navigation">
-              <button onClick={goToPrev} className="nav-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div className="film-indicators">
-                {galleryImages.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      if (!isTransitioning) {
-                        setIsTransitioning(true);
-                        setActiveIndex(idx);
-                        setTimeout(() => setIsTransitioning(false), 800);
-                      }
-                    }}
-                    className={`film-dot ${idx === activeIndex ? 'active' : ''}`}
-                  />
-                ))}
-              </div>
-              <button onClick={goToNext} className="nav-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
             </div>
           </div>
         </motion.div>
