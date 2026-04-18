@@ -158,7 +158,9 @@ function WebcamCapture({ onClose, onCapture }) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, -canvas.width, 0);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       
       const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
@@ -187,6 +189,7 @@ function WebcamCapture({ onClose, onCapture }) {
           playsInline 
           muted
           className="w-full h-full object-cover"
+          style={{ transform: 'scaleX(-1)' }}
         />
         
         <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/50 px-4 py-2 rounded-full">
