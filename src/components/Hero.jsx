@@ -1,15 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
-
-const galleryImages = [
-  { url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80', title: 'Portrait' },
-  { url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32dfb?w=600&q=80', title: 'Landscape' },
-  { url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80', title: 'Wedding' },
-  { url: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=600&q=80', title: 'Couple' },
-  { url: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=600&q=80', title: 'Nature' },
-  { url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80', title: 'Product' },
-];
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { ChevronDown, Zap } from 'lucide-react';
 
 const phrases = [
   { text: "Capturing Moments", gradient: false },
@@ -19,19 +10,243 @@ const phrases = [
   { text: "Painting with Light", gradient: true },
 ];
 
-export default function Hero() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [displayText, setDisplayText] = useState('');
-  const [isTyping, setIsTyping] = useState(true);
-  const [currentPhrase, setCurrentPhrase] = useState(0);
+function Camera3D({ isFlashing, onCapture }) {
+  const x = useMotionValue(0.5);
+  const y = useMotionValue(0.5);
+  
+  const rotateX = useTransform(y, [0, 1], [15, -15]);
+  const rotateY = useTransform(x, [0, 1], [-15, 15]);
+  
+  const springX = useSpring(rotateX, { stiffness: 100, damping: 30 });
+  const springY = useSpring(rotateY, { stiffness: 100, damping: 30 });
+
+  return (
+    <motion.div
+      className="camera-3d-container"
+      style={{
+        rotateX: springX,
+        rotateY: springY,
+      }}
+    >
+      <div className="camera-scene">
+        <div className="camera-body-group">
+          <div className="camera-body">
+            <div className="camera-lens-outer">
+              <motion.div 
+                className="camera-lens-inner"
+                animate={isFlashing ? { scale: [1, 1.15, 1] } : {}}
+                transition={{ duration: 0.15 }}
+              >
+                <div className="lens-glass">
+                  <div className="lens-reflection" />
+                  <div className="lens-reflection secondary" />
+                </div>
+                <div className="lens-aperture" />
+              </motion.div>
+              <motion.div 
+                className="lens-ring-outer"
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+              >
+                <div className="lens-ring-segment" />
+                <div className="lens-ring-segment" />
+                <div className="lens-ring-segment" />
+                <div className="lens-ring-segment" />
+              </motion.div>
+            </div>
+            
+            <div className="camera-shutter-group" onClick={onCapture}>
+              <motion.div 
+                className="shutter-button"
+                animate={isFlashing ? { scaleY: 0.3, translateY: 2 } : { scaleY: 1, translateY: 0 }}
+                transition={{ duration: 0.08 }}
+              />
+              <div className="shutter-label">CAPTURE</div>
+            </div>
+            
+            <div className="camera-grip" />
+            
+            <div className="camera-top-section">
+              <div className="viewfinder-window">
+                <div className="viewfinder-inner" />
+              </div>
+              <div className="hot-shoe" />
+              <div className="mode-dial">
+                <div className="dial-marking" />
+                <div className="dial-marking" />
+                <div className="dial-marking" />
+              </div>
+            </div>
+            
+            <motion.div 
+              className="flash-unit"
+              animate={isFlashing ? { backgroundColor: ['#2d2924', '#D4A574', '#2d2924'] } : {}}
+              transition={{ duration: 0.2 }}
+            >
+              <Zap className="flash-icon" />
+            </motion.div>
+            
+            <div className="brand-text">LENS</div>
+          </div>
+          
+          <div className="camera-base-plate" />
+          
+          <div className="lens-mount-group">
+            <div className="lens-mount-ring" />
+          </div>
+        </div>
+        
+        <div className="floating-particles">
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="particle"
+              animate={{
+                y: [0, -25, 0],
+                opacity: [0.2, 0.7, 0.2],
+                scale: [0.8, 1.2, 0.8],
+              }}
+              transition={{
+                repeat: Infinity,
+                duration: 2.5 + i * 0.3,
+                delay: i * 0.3,
+                ease: "easeInOut",
+              }}
+              style={{ left: `${15 + i * 14}%`, top: `${25 + (i % 3) * 25}%` }}
+            />
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function WebcamCapture({ onClose, onCapture }) {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [stream, setStream] = useState(null);
+  const [captured, setCaptured] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
-    }, 4000);
-    return () => clearInterval(interval);
+    const startCamera = async () => {
+      try {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user', width: 1280, height: 720 } 
+        });
+        setStream(mediaStream);
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
+      } catch (err) {
+        console.error('Camera error:', err);
+        onClose();
+      }
+    };
+    startCamera();
+
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
   }, []);
-    
+
+  const handleCapture = () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+      
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `photo-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+      
+      setCaptured(true);
+      setTimeout(() => {
+        onCapture();
+      }, 1500);
+    }
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center"
+    >
+      <div className="relative w-full max-w-2xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border-4 border-[#D4A574]">
+        <video 
+          ref={videoRef}
+          autoPlay 
+          playsInline 
+          muted
+          className="w-full h-full object-cover"
+        />
+        
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/50 px-4 py-2 rounded-full">
+          <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          <span className="text-white text-sm">LIVE</span>
+        </div>
+        
+        <div className="absolute inset-0 border-2 border-white/10 rounded-2xl pointer-events-none">
+          <div className="absolute top-4 left-4 text-white/30 text-xs">REC</div>
+          <div className="absolute top-4 right-4 text-white/30 text-xs">{new Date().toLocaleTimeString()}</div>
+        </div>
+      </div>
+
+      <canvas ref={canvasRef} className="hidden" />
+
+      <div className="mt-8 flex items-center gap-6">
+        <button 
+          onClick={onClose}
+          className="px-8 py-3 bg-white/10 text-white rounded-full hover:bg-white/20 transition-colors"
+        >
+          Cancel
+        </button>
+        
+        <button 
+          onClick={handleCapture}
+          className="relative group"
+        >
+          <div className="w-20 h-20 rounded-full bg-[#D4A574] flex items-center justify-center border-4 border-white shadow-lg group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-full bg-white" />
+          </div>
+          {captured && (
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </motion.div>
+          )}
+        </button>
+        
+        <div className="w-20" />
+      </div>
+
+      <p className="mt-4 text-white/50 text-sm">
+        {captured ? 'Photo saved!' : 'Click the capture button to take a photo'}
+      </p>
+    </motion.div>
+  );
+}
+
+export default function Hero() {
+  const [isFlashing, setIsFlashing] = useState(false);
+  const [showWebcam, setShowWebcam] = useState(false);
+  const [currentPhrase, setCurrentPhrase] = useState(0);
+  const [displayText, setDisplayText] = useState('');
+  const [isTyping, setIsTyping] = useState(true);
+
   useEffect(() => {
     const phrase = phrases[currentPhrase].text;
     
@@ -70,12 +285,10 @@ export default function Hero() {
     }
   };
 
-  const getVisibleIndices = (center) => {
-    const indices = [];
-    for (let i = -3; i <= 3; i++) {
-      indices.push((center + i + galleryImages.length) % galleryImages.length);
-    }
-    return indices;
+  const handleCapture = () => {
+    setIsFlashing(true);
+    setTimeout(() => setIsFlashing(false), 300);
+    setShowWebcam(true);
   };
 
   return (
@@ -149,35 +362,28 @@ export default function Hero() {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5, duration: 0.8 }}
-          className="order-1 md:order-2"
+          className="order-1 md:order-2 flex flex-col items-center"
         >
-          <div className="infinite-carousel">
-            <motion.div 
-              className="carousel-track"
-              animate={{ x: [0, -300] }}
-              transition={{ 
-                duration: 8, 
-                repeat: Infinity, 
-                ease: "linear" 
-              }}
+          <div className="camera-wrapper">
+            <div 
+              onClick={handleCapture}
+              className="cursor-pointer"
             >
-              {[...galleryImages, ...galleryImages].map((img, idx) => (
-                <div key={idx} className="carousel-item">
-                  <div className="film-frame">
-                    <img src={img.url} alt={img.title} className="film-image" />
-                    <div className="film-sprockets left">
-                      {[...Array(8)].map((_, i) => <div key={i} className="sprocket-hole" />)}
-                    </div>
-                    <div className="film-sprockets right">
-                      {[...Array(8)].map((_, i) => <div key={i} className="sprocket-hole" />)}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </motion.div>
+              <Camera3D isFlashing={isFlashing} />
+            </div>
           </div>
+          <p className="text-text-secondary text-sm text-center mt-4 opacity-60">
+            Click camera to capture photo
+          </p>
         </motion.div>
       </div>
+
+      {showWebcam && (
+        <WebcamCapture 
+          onClose={() => setShowWebcam(false)} 
+          onCapture={() => setShowWebcam(false)}
+        />
+      )}
 
       <motion.button
         initial={{ opacity: 0 }}
@@ -196,179 +402,6 @@ export default function Hero() {
       </motion.button>
 
       <style>{`
-        .infinite-carousel {
-          width: 100%;
-          max-width: 600px;
-          height: 220px;
-          overflow: hidden;
-          position: relative;
-          border-radius: 8px;
-        }
-
-        .carousel-track {
-          display: flex;
-          gap: 20px;
-          width: max-content;
-        }
-
-        .carousel-item {
-          flex-shrink: 0;
-          width: 180px;
-          height: 220px;
-        }
-
-        .film-strip-container {
-          position: relative;
-          width: 100%;
-          max-width: 600px;
-          height: 320px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .film-strip-track {
-          position: relative;
-          width: 100%;
-          height: 240px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .film-frame-wrapper {
-          position: absolute;
-          width: 160px;
-          height: 200px;
-        }
-
-        .film-frame {
-          width: 100%;
-          height: 100%;
-          position: relative;
-          border-radius: 4px;
-          overflow: hidden;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-          transition: box-shadow 0.3s ease;
-        }
-
-        .film-frame.active {
-          box-shadow: 0 12px 48px rgba(212, 165, 116, 0.3), 0 0 0 2px rgba(212, 165, 116, 0.5);
-        }
-
-        .film-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .film-sprockets {
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          width: 12px;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 8px 0;
-        }
-
-        .film-sprockets.left {
-          left: 0;
-        }
-
-        .film-sprockets.right {
-          right: 0;
-        }
-
-        .sprocket-hole {
-          width: 6px;
-          height: 10px;
-          background: #0D0D0D;
-          border-radius: 2px;
-        }
-
-        .film-label {
-          position: absolute;
-          bottom: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: rgba(0, 0, 0, 0.8);
-          color: #D4A574;
-          padding: 6px 16px;
-          border-radius: 4px;
-          font-size: 12px;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-        }
-
-        .film-navigation {
-          display: flex;
-          align-items: center;
-          gap: 20px;
-          margin-top: 20px;
-        }
-
-        .nav-btn {
-          width: 40px;
-          height: 40px;
-          border: 1px solid rgba(212, 165, 116, 0.3);
-          background: transparent;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .nav-btn:hover {
-          border-color: #D4A574;
-          background: rgba(212, 165, 116, 0.1);
-        }
-
-        .nav-btn svg {
-          width: 18px;
-          height: 18px;
-          color: #D4A574;
-        }
-
-        .film-indicators {
-          display: flex;
-          gap: 8px;
-        }
-
-        .film-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: rgba(212, 165, 116, 0.3);
-          border: none;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .film-dot.active {
-          background: #D4A574;
-          box-shadow: 0 0 10px rgba(212, 165, 116, 0.5);
-        }
-
-        @media (max-width: 768px) {
-          .film-strip-container {
-            height: 280px;
-          }
-
-          .film-strip-track {
-            height: 200px;
-          }
-
-          .film-frame-wrapper {
-            width: 120px;
-            height: 160px;
-          }
-        }
-
         .camera-3d-container {
           perspective: 1000px;
           transform-style: preserve-3d;
