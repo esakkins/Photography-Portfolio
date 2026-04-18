@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 
 const galleryImages = [
@@ -21,32 +21,16 @@ const phrases = [
 
 export default function Hero() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [displayText, setDisplayText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
   const [currentPhrase, setCurrentPhrase] = useState(0);
-  const containerRef = useRef(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      goToNext();
-    }, 5000);
+      setActiveIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+    }, 4000);
     return () => clearInterval(interval);
-  }, [activeIndex, isTransitioning]);
-
-  const goToNext = () => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setActiveIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
-    setTimeout(() => setIsTransitioning(false), 1000);
-  };
-
-  const goToPrev = () => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setActiveIndex((prev) => (prev + 1) % galleryImages.length);
-    setTimeout(() => setIsTransitioning(false), 1000);
-  };
+  }, []);
     
   useEffect(() => {
     const phrase = phrases[currentPhrase].text;
@@ -167,74 +151,30 @@ export default function Hero() {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="order-1 md:order-2"
         >
-          <div className="film-strip-container" ref={containerRef}>
-            <div className="film-strip-track">
-              {getVisibleIndices(activeIndex).map((idx, position) => {
-                const distance = Math.abs(position - 3);
-                const isCenter = distance === 0;
-                const isVisible = distance < 3;
-                
-                return (
-                  <motion.div
-                    key={`${activeIndex}-${idx}`}
-                    className="film-frame-wrapper"
-                    initial={false}
-                    animate={{
-                      x: (position - 3) * 180,
-                      scale: isCenter ? 1 : isVisible ? 0.75 : 0.5,
-                      opacity: isVisible ? 1 : 0.3,
-                      zIndex: 10 - distance,
-                    }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 100,
-                      damping: 20,
-                      duration: 0.8,
-                    }}
-                    onClick={() => {
-                      if (!isCenter && !isTransitioning) {
-                        setIsTransitioning(true);
-                        setActiveIndex(idx);
-                        setTimeout(() => setIsTransitioning(false), 1000);
-                      }
-                    }}
-                    style={{ cursor: isCenter ? 'default' : 'pointer' }}
-                  >
-                    <motion.div 
-                      className={`film-frame ${isCenter ? 'active' : ''}`}
-                      animate={isCenter ? { scale: [1, 1.02, 1] } : {}}
-                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    >
-                      <img 
-                        src={galleryImages[idx].url} 
-                        alt={galleryImages[idx].title}
-                        className="film-image"
-                      />
-                      <div className="film-sprockets left">
-                        {[...Array(8)].map((_, i) => (
-                          <div key={i} className="sprocket-hole" />
-                        ))}
-                      </div>
-                      <div className="film-sprockets right">
-                        {[...Array(8)].map((_, i) => (
-                          <div key={i} className="sprocket-hole" />
-                        ))}
-                      </div>
-                      {isCenter && (
-                        <motion.div 
-                          className="film-label"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3 }}
-                        >
-                          {galleryImages[idx].title}
-                        </motion.div>
-                      )}
-                    </motion.div>
-                  </motion.div>
-                );
-              })}
-            </div>
+          <div className="infinite-carousel">
+            <motion.div 
+              className="carousel-track"
+              animate={{ x: [0, -300] }}
+              transition={{ 
+                duration: 8, 
+                repeat: Infinity, 
+                ease: "linear" 
+              }}
+            >
+              {[...galleryImages, ...galleryImages].map((img, idx) => (
+                <div key={idx} className="carousel-item">
+                  <div className="film-frame">
+                    <img src={img.url} alt={img.title} className="film-image" />
+                    <div className="film-sprockets left">
+                      {[...Array(8)].map((_, i) => <div key={i} className="sprocket-hole" />)}
+                    </div>
+                    <div className="film-sprockets right">
+                      {[...Array(8)].map((_, i) => <div key={i} className="sprocket-hole" />)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
           </div>
         </motion.div>
       </div>
@@ -256,6 +196,27 @@ export default function Hero() {
       </motion.button>
 
       <style>{`
+        .infinite-carousel {
+          width: 100%;
+          max-width: 600px;
+          height: 220px;
+          overflow: hidden;
+          position: relative;
+          border-radius: 8px;
+        }
+
+        .carousel-track {
+          display: flex;
+          gap: 20px;
+          width: max-content;
+        }
+
+        .carousel-item {
+          flex-shrink: 0;
+          width: 180px;
+          height: 220px;
+        }
+
         .film-strip-container {
           position: relative;
           width: 100%;
