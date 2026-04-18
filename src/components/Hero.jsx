@@ -178,9 +178,9 @@ function WebcamCapture({ onClose, onCapture }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center"
+      className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-4"
     >
-      <div className="relative w-full max-w-2xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border-4 border-[#D4A574]">
+      <div className="relative w-full max-w-2xl aspect-[3/4] md:aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border-4 border-[#D4A574]">
         <video 
           ref={videoRef}
           autoPlay 
@@ -202,10 +202,10 @@ function WebcamCapture({ onClose, onCapture }) {
 
       <canvas ref={canvasRef} className="hidden" />
 
-      <div className="mt-8 flex items-center gap-6">
+      <div className="mt-6 md:mt-8 flex items-center gap-4 md:gap-6">
         <button 
           onClick={onClose}
-          className="px-8 py-3 bg-white/10 text-white rounded-full hover:bg-white/20 transition-colors"
+          className="px-6 md:px-8 py-2 md:py-3 bg-white/10 text-white rounded-full hover:bg-white/20 transition-colors text-sm md:text-base"
         >
           Cancel
         </button>
@@ -214,8 +214,8 @@ function WebcamCapture({ onClose, onCapture }) {
           onClick={handleCapture}
           className="relative group"
         >
-          <div className="w-20 h-20 rounded-full bg-[#D4A574] flex items-center justify-center border-4 border-white shadow-lg group-hover:scale-110 transition-transform">
-            <div className="w-12 h-12 rounded-full bg-white" />
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#D4A574] flex items-center justify-center border-4 border-white shadow-lg group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white" />
           </div>
           {captured && (
             <motion.div 
