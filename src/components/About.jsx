@@ -3,9 +3,9 @@ import { motion, useInView } from 'framer-motion';
 import { Camera, MapPin, Calendar, Award, Users, Clock, Sparkles } from 'lucide-react';
 
 const stats = [
-  { value: 100, label: 'Projects Completed', suffix: '+', icon: Camera },
+  { value: 5, label: 'Projects Completed', suffix: '+', icon: Camera },
   { value: 3, label: 'Years Hobby', suffix: '+', icon: Clock },
-  { value: 5, label: 'Awards Won', suffix: '+', icon: Award },
+  { value: 0, label: 'Awards Won', suffix: '+', icon: Award },
   { value: 30, label: 'Happy Clients', suffix: '%', icon: Users },
 ];
 
@@ -57,6 +57,11 @@ function Counter({ value, suffix, icon: Icon, label }) {
 export default function About() {
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: true, margin: '-100px' });
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
 
   return (
     <section id="about" className="min-h-screen py-24 relative overflow-hidden">
@@ -96,17 +101,16 @@ export default function About() {
             className="relative"
           >
             <div className="relative">
-              <div className="aspect-[4/5] rounded-3xl overflow-hidden">
-                <div className="w-full h-full bg-gradient-to-br from-accent/20 via-accent/10 to-bg-secondary flex items-center justify-center">
-                  <div className="relative">
-                    <Camera className="w-32 h-32 text-accent/40" />
-                    <motion.div
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ repeat: Infinity, duration: 3 }}
-                      className="absolute -inset-4 border-2 border-accent/20 rounded-full"
-                    />
-                  </div>
-                </div>
+              <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl">
+                <img 
+                  src="/images/About Me/esakkimani.jpg" 
+                  alt="Esakkimani - Photographer" 
+                  className={`w-full h-full object-cover object-center transition-all duration-700 ${
+                    imageLoaded ? 'blur-0 opacity-100' : 'blur-xl opacity-50'
+                  }`}
+                  loading="eager"
+                  onLoad={handleImageLoad}
+                />
               </div>
               
               <motion.div
@@ -117,7 +121,7 @@ export default function About() {
               >
                 <div className="flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-accent" />
-                  <span className="text-text-primary font-body">Tamil Nadu, India</span>
+                  <span className="text-text-primary font-body">Bengaluru, India</span>
                 </div>
               </motion.div>
 

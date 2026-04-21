@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Aperture, Menu, X, Star, Sparkles, Camera, Heart, Zap } from 'lucide-react';
+import { Aperture, Menu, X, Star, Sparkles, Camera, Heart, Zap, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navLinks = [
@@ -7,16 +7,22 @@ const navLinks = [
   { name: 'About', href: '#about', icon: Sparkles },
   { name: 'Portfolio', href: '#portfolio', icon: Camera },
   { name: 'Services', href: '#services', icon: Heart },
+  { name: 'Feedback', href: '#feedback', icon: MessageCircle },
   { name: 'Contact', href: '#contact', icon: Zap },
 ];
 
 function NavLink({ link, isActive, onClick }) {
   const [isHovered, setIsHovered] = useState(false);
 
+  const handleClick = (e) => {
+    e.preventDefault();
+    onClick();
+  };
+
   return (
     <a
       href={link.href}
-      onClick={onClick}
+      onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="nav-item group"
@@ -90,12 +96,19 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleNavClick = (e, href) => {
-    e.preventDefault();
-    const element = document.querySelector(href);
+  const handleNavClick = (href) => {
+    const elements = document.querySelectorAll(href);
+    const element = elements.length > 0 ? elements[0] : null;
+    
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      const navbarHeight = 70;
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      window.scrollTo({
+        top: elementPosition - navbarHeight,
+        behavior: 'smooth'
+      });
     }
+    
     setActiveLink(href);
     setIsMobileOpen(false);
   };
@@ -109,9 +122,10 @@ export default function Navbar() {
         isScrolled ? 'py-2' : 'py-4'
       }`}
       style={{
-        background: isScrolled ? 'rgba(26, 23, 20, 0.7)' : 'transparent',
-        backdropFilter: isScrolled ? 'blur(12px)' : 'none',
-        WebkitBackdropFilter: isScrolled ? 'blur(12px)' : 'none',
+        background: 'rgba(26, 23, 20, 0.85)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(212, 165, 116, 0.1)',
       }}
     >
       <div className="max-w-6xl mx-auto px-6 flex items-center justify-between relative">
@@ -128,7 +142,7 @@ export default function Navbar() {
             <Aperture className="w-8 h-8 text-accent" />
           </motion.div>
           <span className="font-heading text-xl tracking-wide text-text-primary">
-            Lens<span className="text-accent">&</span>Light
+            NS FRAME HOUSE
           </span>
         </a>
 
@@ -138,7 +152,7 @@ export default function Navbar() {
               key={link.name}
               link={link}
               isActive={activeLink === link.href}
-              onClick={(e) => handleNavClick(e, link.href)}
+              onClick={() => handleNavClick(link.href)}
             />
           ))}
         </div>
@@ -153,33 +167,56 @@ export default function Navbar() {
 
       <AnimatePresence>
         {isMobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden glass border-t border-accent/10"
-          >
-            <div className="px-6 py-4 flex flex-col gap-2">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                return (
-                  <a
-                    key={link.name}
-                    href={link.href}
-                    onClick={(e) => handleNavClick(e, link.href)}
-                    className={`flex items-center gap-3 text-lg py-3 px-4 rounded-lg transition-all ${
-                      activeLink === link.href
-                        ? 'bg-accent/20 text-accent'
-                        : 'text-text-secondary hover:bg-accent/10 hover:text-accent'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    {link.name}
-                  </a>
-                );
-              })}
-            </div>
-          </motion.div>
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+              onClick={() => setIsMobileOpen(false)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 bottom-0 w-72 z-50 md:hidden flex flex-col"
+              style={{
+                background: 'linear-gradient(180deg, #1A1714 0%, #0D0D0D 100%)',
+                boxShadow: '-10px 0 30px rgba(0, 0, 0, 0.5)',
+                height: '100vh',
+              }}
+            >
+              <div className="p-6 border-b border-accent/10 flex justify-end">
+                <button
+                  onClick={() => setIsMobileOpen(false)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6 text-text-primary" />
+                </button>
+              </div>
+              <div className="px-6 py-4 flex flex-col gap-2">
+                {navLinks.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <button
+                      type="button"
+                      key={link.name}
+                      onClick={() => handleNavClick(link.href)}
+                      className={`flex items-center gap-3 text-lg py-3 px-4 rounded-lg transition-all w-full text-left ${
+                        activeLink === link.href
+                          ? 'bg-accent/20 text-accent'
+                          : 'text-text-secondary hover:bg-accent/10 hover:text-accent'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
+                      {link.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 

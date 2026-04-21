@@ -83,6 +83,8 @@ function PhotoFrameEditor({ photoData, onClose, onRetake }) {
           <img 
             src={photoData} 
             alt="Captured" 
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover"
             style={selectedFrame.inner}
           />
@@ -413,9 +415,9 @@ export default function Hero() {
           index++;
         } else {
           clearInterval(timer);
-          setTimeout(() => setIsTyping(false), 2000);
+          setTimeout(() => setIsTyping(false), 3000);
         }
-      }, 120);
+      }, 150);
       return () => clearInterval(timer);
     } else {
       let index = phrase.length;
@@ -428,7 +430,7 @@ export default function Hero() {
           setCurrentPhrase((prev) => (prev + 1) % phrases.length);
           setIsTyping(true);
         }
-      }, 60);
+      }, 80);
       return () => clearInterval(timer);
     }
   }, [currentPhrase, isTyping]);
